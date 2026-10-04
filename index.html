@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra Glass Translator by Fluffy Barbara</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-bg-hover: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-border-light: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            --glass-blur: blur(24px);
+            
+            --accent: #00f2fe;
+            --danger: #ff0844;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: #020205;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Анимированный неоновый фон для проявления эффекта стекла */
+        .bg-blobs {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: #020205;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.6;
+            animation: moveBlobs 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .blob-1 { background: #4facfe; width: 45vw; height: 45vw; top: -10%; left: -10%; }
+        .blob-2 { background: #ff0844; width: 35vw; height: 35vw; bottom: -10%; right: -10%; animation-delay: -5s; }
+        .blob-3 { background: #b06ab3; width: 40vw; height: 40vw; top: 40%; left: 30%; animation-delay: -10s; animation-duration: 25s;}
+
+        @keyframes moveBlobs {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(15%, 15%) scale(1.1); }
+            100% { transform: translate(-10%, -10%) scale(0.9); }
+        }
+
+        /* Универсальный класс стекла */
+        .ultra-glass {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-border-light);
+            border-left: 1px solid var(--glass-border-light);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .header-icon {
+            font-size: 34px;
+            color: #fff;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            z-index: 1;
+        }
+
+        .translator-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 30px;
+            align-items: stretch;
+        }
+
+        @media (max-width: 900px) {
+            .translator-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Панели перевода */
+        .panel {
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: visible; /* Чтобы тени кнопок не обрезались */
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .panel:focus-within {
+            background: var(--glass-bg-hover);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.1) inset;
+        }
+
+        /* Стеклянные селекты */
+        .custom-select-wrapper {
+            position: relative;
+            padding: 24px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+            user-select: none;
+            border-radius: 30px 30px 0 0;
+            transition: background 0.3s;
+        }
+
+        .custom-select-wrapper:hover { background: var(--glass-bg-hover); }
+
+        .custom-select-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .custom-select-trigger i {
+            font-size: 14px;
+            color: var(--text-muted);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Выпадающий список тоже из стекла */
+        .custom-options {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            border-radius: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+            padding: 10px 0;
+        }
+
+        .custom-select-wrapper.open .custom-options {
+            display: block;
+            animation: floatUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes floatUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger i {
+            transform: rotate(180deg);
+            color: #fff;
+        }
+
+        .custom-option {
+            padding: 15px 30px;
+            font-size: 16px;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .custom-option:hover {
+            background: var(--glass-bg-hover);
+            color: #fff;
+            padding-left: 40px;
+        }
+
+        /* Стеклянный скроллбар */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+            background: rgba(255, 255, 255, 0.2); 
+            border-radius: 10px; 
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.4); }
+
+        /* Поля ввода */
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            padding: 30px;
+            font-size: 22px;
+            font-weight: 300;
+            resize: none;
+            line-height: 1.6;
+        }
+
+        textarea::placeholder { color: rgba(255, 255, 255, 0.4); font-weight: 300; }
+
+        /* Тулбар */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-top: 1px solid var(--glass-border);
+            border-radius: 0 0 30px 30px;
+        }
+
+        .tools {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Стеклянные кнопки */
+        .tool-btn {
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-btn:hover {
+            background: var(--glass-bg-hover);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .tool-btn:active { transform: translateY(1px); }
+
+        .tool-btn.active {
+            color: #fff;
+            border-color: var(--danger);
+            background: rgba(255, 8, 68, 0.3);
+            box-shadow: 0 0 20px rgba(255, 8, 68, 0.5);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 8, 68, 0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 8, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 8, 68, 0); }
+        }
+
+        /* Стеклянный выбор голоса */
+        .voice-select {
+            color: var(--text-main);
+            height: 48px;
+            border-radius: 16px;
+            padding: 0 15px;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            max-width: 140px;
+            transition: all 0.3s;
+            appearance: none;
+        }
+        
+        .voice-select:hover {
+            background: var(--glass-bg-hover);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .voice-select option { background: #111; color: #fff; }
+
+        .char-count {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Кнопка смены (Стеклянная сфера) */
+        .swap-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .swap-btn {
+            color: #fff;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .swap-btn:hover {
+            background: var(--glass-bg-hover);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: rotate(180deg) scale(1.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (max-width: 900px) {
+            .swap-wrapper { height: 0; }
+            .swap-btn { transform: rotate(90deg); margin-top: -65px; }
+            .swap-btn:hover { transform: rotate(270deg) scale(1.1); }
+        }
+
+        /* Тултипы из стекла */
+        .tooltip-text {
+            visibility: hidden;
+            color: #fff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 10px 16px;
+            position: absolute;
+            z-index: 100;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) translateY(10px) scale(0.95);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tooltip-left .tooltip-text { left: 0; transform: translateX(0) translateY(10px) scale(0.95); }
+        .tool-btn:hover .tooltip-text { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        .tooltip-left:hover .tooltip-text { transform: translateX(0) translateY(0) scale(1); }
+
+        /* История переводов */
+        .history-section {
+            border-radius: 30px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 25px;
+        }
+
+        .history-header h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-header h3 i { color: var(--text-muted); }
+
+        .clear-btn {
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 8, 68, 0.3);
+            border-color: rgba(255, 8, 68, 0.6);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(255, 8, 68, 0.3);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+
+        /* Стеклянные карточки истории */
+        .history-item {
+            border-radius: 20px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .history-item:hover {
+            background: var(--glass-bg-hover);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateX(10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .history-langs {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0.8;
+        }
+
+        .history-texts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 700px) { .history-texts { grid-template-columns: 1fr; gap: 15px; } }
+
+        .history-original { font-size: 17px; color: #fff; font-weight: 400; line-height: 1.6; }
+        .history-translation { font-size: 17px; color: var(--text-muted); font-weight: 300; line-height: 1.6; }
+        
+        .empty-history { text-align: center; color: var(--text-muted); padding: 50px 0; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="header">
+        <i class="fa-solid fa-language header-icon"></i>
+        <h1>Ultra Glass</h1>
+    </div>
+
+    <div class="container">
+        <div class="translator-grid">
+            
+            <!-- Левая панель -->
+            <div class="panel ultra-glass">
+                <div class="custom-select-wrapper" id="select-from-wrapper">
+                    <div class="custom-select-trigger">
+                        <span id="trigger-from">Русский</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="custom-options ultra-glass" id="options-from"></div>
+                </div>
+                
+                <textarea id="input-text" placeholder="Введите текст для перевода..." spellcheck="false"></textarea>
+                
+                <div class="toolbar">
+                    <div class="tools">
+                        <button class="tool-btn ultra-glass tooltip-left" id="mic-btn">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span class="tooltip-text ultra-glass">Голосовой ввод</span>
+                        </button>
+                        
+                        <select class="voice-select ultra-glass" id="voice-from" title="Голос диктора"></select>
+                        
+                        <button class="tool-btn ultra-glass" onclick="speakText('input')">
+                            <i class="fa-solid fa-play"></i>
+                            <span class="tooltip-text ultra-glass">Озвучить</span>
+                        </button>
+                        <button class="tool-btn ultra-glass" onclick="copyText('input')">
+                            <i class="fa-regular fa-copy"></i>
+                            <span class="tooltip-text ultra-glass">Копировать</span>
+                        </button>
+                    </div>
+                    <span class="char-count" id="char-count">0 / 5000</span>
+                </div>
+            </div>
+
+            <!-- Обмен языками -->
+            <div class="swap-wrapper">
+                <button class="swap-btn ultra-glass" id="swap-btn">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </button>
+            </div>
+
+            <!-- Правая панель -->
+            <div class="panel ultra-glass">
+                <div class="custom-select-wrapper" id="select-to-wrapper">
+                    <div class="custom-select-trigger">
+                        <span id="trigger-to">Английский</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="custom-options ultra-glass" id="options-to"></div>
+                </div>
+                
+                <textarea id="output-text" placeholder="Здесь появится перевод..." readonly></textarea>
+                
+                <div class="toolbar">
+                    <div class="tools">
+                        <select class="voice-select ultra-glass" id="voice-to" title="Голос диктора"></select>
+
+                        <button class="tool-btn ultra-glass tooltip-left" onclick="speakText('output')">
+                            <i class="fa-solid fa-play"></i>
+                            <span class="tooltip-text ultra-glass">Озвучить</span>
+                        </button>
+                        <button class="tool-btn ultra-glass" onclick="copyText('output')">
+                            <i class="fa-regular fa-copy"></i>
+                            <span class="tooltip-text ultra-glass">Копировать</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- История -->
+        <div class="history-section ultra-glass">
+            <div class="history-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> История переводов</h3>
+                <button class="clear-btn ultra-glass" id="clear-history">
+                    <i class="fa-solid fa-trash-can"></i> Очистить
+                </button>
+            </div>
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const languages = {
+            "ru": "Русский", "en": "Английский", "es": "Испанский", "fr": "Французский", 
+            "de": "Немецкий", "it": "Итальянский", "zh-CN": "Китайский", 
+            "ja": "Японский", "ko": "Корейский", "ar": "Арабский", "tr": "Турецкий",
+            "pt": "Португальский", "pl": "Польский", "uk": "Украинский", "kk": "Казахский",
+            "hi": "Хинди", "nl": "Нидерландский", "sv": "Шведский", "el": "Греческий",
+            "he": "Иврит", "uz": "Узбекский", "th": "Тайский", "vi": "Вьетнамский",
+            "cs": "Чешский", "fi": "Финский", "da": "Датский", "bg": "Болгарский"
+        };
+
+        const inputText = document.getElementById('input-text');
+        const outputText = document.getElementById('output-text');
+        const charCount = document.getElementById('char-count');
+        const swapBtn = document.getElementById('swap-btn');
+        const historyList = document.getElementById('history-list');
+        const clearHistoryBtn = document.getElementById('clear-history');
+        const micBtn = document.getElementById('mic-btn');
+
+        let currentLangFrom = 'ru';
+        let currentLangTo = 'en';
+
+        // Инициализация кастомных списков
+        function initSelects() {
+            const optionsFrom = document.getElementById('options-from');
+            const optionsTo = document.getElementById('options-to');
+            
+            let html = '';
+            for (let code in languages) {
+                html += `<div class="custom-option" data-value="${code}">${languages[code]}</div>`;
+            }
+            
+            optionsFrom.innerHTML = html;
+            optionsTo.innerHTML = html;
+
+            document.getElementById('trigger-from').innerText = languages[currentLangFrom];
+            document.getElementById('trigger-to').innerText = languages[currentLangTo];
+
+            setupSelectEvents('select-from-wrapper', 'trigger-from', true);
+            setupSelectEvents('select-to-wrapper', 'trigger-to', false);
+        }
+
+        function setupSelectEvents(wrapperId, triggerId, isFrom) {
+            const wrapper = document.getElementById(wrapperId);
+            const trigger = document.getElementById(triggerId);
+            const options = wrapper.querySelectorAll('.custom-option');
+
+            wrapper.addEventListener('click', (e) => {
+                if(isFrom) document.getElementById('select-to-wrapper').classList.remove('open');
+                else document.getElementById('select-from-wrapper').classList.remove('open');
+                
+                wrapper.classList.toggle('open');
+                e.stopPropagation();
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    const value = opt.getAttribute('data-value');
+                    trigger.innerText = opt.innerText;
+                    
+                    if(isFrom) { currentLangFrom = value; updateVoiceDropdowns('input'); } 
+                    else { currentLangTo = value; updateVoiceDropdowns('output'); }
+                    
+                    wrapper.classList.remove('open');
+                    translateText();
+                    e.stopPropagation();
+                });
+            });
+        }
+
+        document.addEventListener('click', () => {
+            document.getElementById('select-from-wrapper').classList.remove('open');
+            document.getElementById('select-to-wrapper').classList.remove('open');
+        });
+
+        // TTS - Система голосов
+        let availableVoices = [];
+
+        function loadVoices() {
+            availableVoices = window.speechSynthesis.getVoices();
+            updateVoiceDropdowns('input');
+            updateVoiceDropdowns('output');
+        }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+
+        function updateVoiceDropdowns(type) {
+            const lang = type === 'input' ? currentLangFrom : currentLangTo;
+            const selectElement = type === 'input' ? document.getElementById('voice-from') : document.getElementById('voice-to');
+            
+            selectElement.innerHTML = '';
+            const filteredVoices = availableVoices.filter(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+
+            if (filteredVoices.length === 0) {
+                selectElement.innerHTML = '<option value="">Голос ОС</option>';
+                return;
+            }
+
+            filteredVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = voice.name;
+                let cleanName = voice.name.replace(/Microsoft|Google|Apple|Desktop|English|Russian|\([^)]*\)/gi, '').trim();
+                if (!cleanName) cleanName = `Голос ${index + 1}`;
+                option.textContent = cleanName;
+                selectElement.appendChild(option);
+            });
+        }
+
+        function speakText(type) {
+            let text = type === 'input' ? inputText.value : outputText.value;
+            let lang = type === 'input' ? currentLangFrom : currentLangTo;
+            let selectElement = type === 'input' ? document.getElementById('voice-from') : document.getElementById('voice-to');
+            
+            if(!text) return;
+            
+            window.speechSynthesis.cancel();
+            let utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+
+            if (selectElement.value) {
+                const selectedVoice = availableVoices.find(v => v.name === selectElement.value);
+                if (selectedVoice) utterance.voice = selectedVoice;
+            }
+            window.speechSynthesis.speak(utterance);
+            
+            const btn = event.currentTarget;
+            const icon = btn.querySelector('i');
+            icon.className = 'fa-solid fa-stop';
+            utterance.onend = () => { icon.className = 'fa-solid fa-play'; };
+        }
+
+        // Автоперевод
+        let translateTimeout;
+        let historyTimeout;
+
+        inputText.addEventListener('input', () => {
+            let textLength = inputText.value.length;
+            charCount.innerText = `${textLength} / 5000`;
+            
+            if(textLength > 5000) {
+                inputText.value = inputText.value.substring(0, 5000);
+                charCount.innerText = `5000 / 5000`;
+            }
+
+            clearTimeout(translateTimeout);
+            clearTimeout(historyTimeout);
+            
+            if (inputText.value.trim() === '') {
+                outputText.value = '';
+                return;
+            }
+
+            translateTimeout = setTimeout(() => { translateText(false); }, 500);
+            historyTimeout = setTimeout(() => {
+                if(inputText.value.trim() !== '' && outputText.value.trim() !== '') {
+                    saveToHistory(inputText.value, outputText.value, currentLangFrom, currentLangTo);
+                }
+            }, 2500);
+        });
+
+        async function translateText(forceSaveHistory = false) {
+            const text = inputText.value.trim();
+            if(!text) { outputText.value = ''; return; }
+            outputText.placeholder = "Перевод...";
+            
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${currentLangFrom}&tl=${currentLangTo}&dt=t&q=${encodeURIComponent(text)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let translated = "";
+                data[0].forEach(item => { if (item[0]) translated += item[0]; });
+                outputText.value = translated;
+
+                if(forceSaveHistory) saveToHistory(text, translated, currentLangFrom, currentLangTo);
+            } catch (error) {
+                outputText.placeholder = "Ошибка сервиса перевода...";
+            }
+        }
+
+        swapBtn.addEventListener('click', () => {
+            let tempText = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = tempText;
+
+            let tempLang = currentLangFrom;
+            currentLangFrom = currentLangTo;
+            currentLangTo = tempLang;
+
+            document.getElementById('trigger-from').innerText = languages[currentLangFrom];
+            document.getElementById('trigger-to').innerText = languages[currentLangTo];
+            
+            updateVoiceDropdowns('input');
+            updateVoiceDropdowns('output');
+            
+            if(inputText.value.trim() !== '') translateText(true);
+        });
+
+        // Сохранение истории (с уникальным ключом для этой версии)
+        function getHistory() {
+            return JSON.parse(localStorage.getItem('ultraGlassHistory')) || [];
+        }
+
+        function saveToHistory(original, translation, from, to) {
+            let history = getHistory();
+            if(history.length > 0 && history[0].original === original && history[0].translation === translation) return; 
+
+            history.unshift({ original, translation, from, to, id: Date.now() });
+            if(history.length > 30) history.pop();
+            
+            localStorage.setItem('ultraGlassHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = getHistory();
+            historyList.innerHTML = '';
+            
+            if(history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">История переводов пока пуста</div>';
+                return;
+            }
+
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item ultra-glass';
+                div.innerHTML = `
+                    <div class="history-langs">
+                        ${languages[item.from]} <i class="fa-solid fa-arrow-right-long"></i> ${languages[item.to]}
+                    </div>
+                    <div class="history-texts">
+                        <div class="history-original">${item.original}</div>
+                        <div class="history-translation">${item.translation}</div>
+                    </div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    currentLangFrom = item.from; currentLangTo = item.to;
+                    document.getElementById('trigger-from').innerText = languages[currentLangFrom];
+                    document.getElementById('trigger-to').innerText = languages[currentLangTo];
+                    updateVoiceDropdowns('input'); updateVoiceDropdowns('output');
+                    
+                    inputText.value = item.original; outputText.value = item.translation;
+                    charCount.innerText = `${item.original.length} / 5000`;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                historyList.appendChild(div);
+            });
+        }
+
+        clearHistoryBtn.addEventListener('click', () => {
+            localStorage.removeItem('ultraGlassHistory');
+            renderHistory();
+        });
+
+        // Умная пунктуация и Диктовка
+        function formatTranscript(text) {
+            text = text.replace(/\s+([.,!?])/g, '$1'); 
+            text = text.replace(/([.,!?])(?=[^\s])/g, '$1 '); 
+            text = text.replace(/(^\s*|[.!?]\s+)([a-zа-яё])/gi, function(m, p1, p2) {
+                return p1 + p2.toUpperCase();
+            });
+            return text;
+        }
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            let isRecording = false;
+
+            recognition.onstart = () => { isRecording = true; micBtn.classList.add('active'); };
+            recognition.onerror = () => { micBtn.classList.remove('active'); isRecording = false; };
+            recognition.onend = () => { micBtn.classList.remove('active'); isRecording = false; };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript + ' ';
+                }
+                
+                if (finalTranscript !== '') {
+                    let currentText = inputText.value;
+                    let combinedText = (currentText + ' ' + finalTranscript).trim();
+                    inputText.value = formatTranscript(combinedText);
+                    
+                    charCount.innerText = `${inputText.value.length} / 5000`;
+                    translateText();
+                }
+            };
+
+            micBtn.addEventListener('click', () => {
+                if (isRecording) { recognition.stop(); } 
+                else { recognition.lang = currentLangFrom; recognition.start(); }
+            });
+        } else {
+            micBtn.style.display = 'none';
+        }
+
+        function copyText(type) {
+            let text = type === 'input' ? inputText.value : outputText.value;
+            if(text) {
+                navigator.clipboard.writeText(text);
+                const btn = event.currentTarget;
+                const icon = btn.querySelector('i');
+                icon.className = 'fa-solid fa-check';
+                setTimeout(() => { icon.className = 'fa-regular fa-copy'; }, 2000);
+            }
+        }
+
+        initSelects();
+        renderHistory();
+        setTimeout(loadVoices, 500);
+    </script>
+</body>
+</html>
